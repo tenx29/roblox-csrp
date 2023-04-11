@@ -48,7 +48,7 @@ A CSRP message header is composed of six (6) parts. The value of each part shoul
 3. `Interaction ID` - The ID of the message. This is a string that uniquely identifies the message. This field is required and should be unique for each interaction. This can be used to pair requests and responses by using the same ID for both messages.
 4. `Fragment Sequence Number` - The sequence number of the message fragment. This is a number that uniquely identifies the message fragment. This field is required if the message is fragmented. If left blank, the value is assumed to be equal to the `Fragment Count` value.
 5. `Fragment Count` - The total number of fragments in the message. This is a number that indicates the total number of fragments in the message. If left blank, the value is assumed to be `1`.
-6. `Options` - A comma-separated list of key-value pairs that provide additional information about the message. The key and value of each option should contain any semicolon (`;`), comma (`,`), or equals (`=`) characters to avoid ambiguity. The key and value of each option should be separated by an equals (`=`) character. This field can be left blank.
+6. `Options` - A comma-separated list of key-value pairs that provide additional information about the message. The key and value of each option should not contain any semicolon (`;`), comma (`,`), or equals (`=`) characters to avoid ambiguity. The key and value of each option should be separated by an equals (`=`) character. This field can be left blank.
 
 ### Message Routing
 
