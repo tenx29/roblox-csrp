@@ -62,7 +62,7 @@ If the Destination Server ID field is empty, then the message is intended for al
 
 ### Message Fragmentation
 
-The Roblox MessagingService has a maximum message size of 1 kB. If a message (including both the header and the body) is larger than 1 kB, it must be split into multiple fragments. Each fragment's header must have a unique Fragment Sequence Number and the Fragment Count must be equal to the total number of fragments. The Fragment Sequence Number of the first fragment must be `1`, and the Fragment Sequence Number of the last fragment must be equal to the Fragment Count.
+The Roblox MessagingService has a maximum message size of 1 kB. If a message (including both the header and the body) is larger than 1 kB, it must be split into multiple fragments. Each fragment's header must have a unique Fragment Sequence Number and the Fragment Count must be equal to the total number of fragments. The Fragment Sequence Number of the first fragment must be `1`, and the Fragment Sequence Number of the last fragment must be equal to the Fragment Count. The CSRP allows the fragment size to be any value as long as the header and part of the body fit within the specified limit.
 
 Once a message has been split into fragments, the fragments can be sent in any order. The recipient should reassemble the fragments in the correct order before processing the message.
 
