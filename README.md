@@ -20,6 +20,8 @@ The CSRP is intended to provide a simple cross-server communication standard for
 
 The CSRP is not intended to provide a standard for cross-game communication or communication between a Roblox game and web APIs.
 
+The CSRP is not intended to provide encrypted messaging between servers. If such a functionality is necessary, the implementation is left up to the user. However, this should not be necessary as server-side code should be able to be trusted with cross-server messaging.
+
 ### About this document
 
 This document is written in Markdown and is intended to be read on GitHub. The document provides a specification of the behavior required of a CSRP implementation, both in its interactions with higher level systems and in its interactions with other CSRP implementations.
