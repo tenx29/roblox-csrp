@@ -119,7 +119,7 @@ To broadcast a message to all servers except one, the Destination Server ID fiel
 To send a fragmented message, the message payload should be split into multiple fragments. The Fragment Sequence Number header field should contain the index of the fragment. The Fragment Count header field should contain the total number of fragments in the message.
 
 ```
-9999-ffff;1111-2222;aaaa-bbbb;1;3;; this is the second fragment and
+9999-ffff;1111-2222;aaaa-bbbb;2;3;; this is the second fragment and
 9999-ffff;1111-2222;aaaa-bbbb;1;3;;This is the first fragment,
 9999-ffff;1111-2222;aaaa-bbbb;3;3;; this is the third fragment.
 ```
