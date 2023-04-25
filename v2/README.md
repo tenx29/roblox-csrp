@@ -32,15 +32,20 @@ This document is written in Markdown and is intended to be read on GitHub. The d
 
 ### Message Composition
 
-Each CSRP message must be a single string containing both the message header and the message body. The message header is divided into six (6) parts, each separated by a single semicolon (`;`) character. The message body is the remainder of the message string, and must be separated from the message header by a single semicolon (`;`) character. Any semicolons (`;`) in the message body should be ignored when parsing the message header.
+In CSRPv2, the message format has changed significantly. Message header segments are still separated using semicolons (`;`), but fragmented messages are now composed of a minimal fragment header and message content. The full message header, which has also changed, is encapsulated into the fragment content, allowing it to be fragmented with the message body.
 
-This message format was chosen in favour of fixed-length header fields because it allows for greater flexibility in terms of recipient filtering and header options.
-
-#### CSRP Message
+#### Raw CSRP Message
 
 ```
- Header                                                                                              | Body
-interaction_id;fragment_sequence_number;fragment_count;source_server_id;destination_server_id;options;message body with any characters
+ Header                                                      | Body
+interaction_id;source_server_id;destination_server_id;options;message body with any characters
+```
+
+#### Fragmented CSRP Message
+
+```
+ Minimal Fragment Header                              | Fragment Content
+interaction_id;fragment_sequence_number;fragment_count;fragment of raw CSRP message including its header, minus the interaction_id
 ```
 
 ### Header Format
@@ -90,7 +95,9 @@ In order to fragment a message, the message should be concatenated into a single
 source_server_id;destination_server_ids;options;message body with any characters
 ```
 
-Then, the message should be split into fragments of the desired size. The fragments should be prefixed with the minimal fragment header containing the Interaction ID, Fragment Sequence Number and Fragment Count separated by semicolons (`;`). The minimal fragment header should be followed by a semicolon and the content of the fragment.
+Note that the Interaction ID is not included in the message body. It will be included in the minimal fragment header of each fragment.
+
+After formatting, the message should be split into fragments of the desired size. The fragments should be prefixed with the minimal fragment header containing the Interaction ID, Fragment Sequence Number and Fragment Count separated by semicolons (`;`). The minimal fragment header should be followed by a semicolon and the content of the fragment.
 
 Once a fragmented message has been received, the fragments should be stored in a temporary buffer until all fragments have been received. Once all fragments have been received, the fragments should be reassembled in the correct order by concatenating the fragment content and prepending the Interaction ID to the final message. The reassembled message should then be processed as a normal CSRPv2 message.
 
