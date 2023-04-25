@@ -45,18 +45,32 @@ interaction_id;fragment_sequence_number;fragment_count;source_server_id;destinat
 
 ### Header Format
 
-A CSRP message header is composed of six (6) parts. The value of each part should not contain any semicolon (`;`) characters to avoid ambiguity. Sections can be left blank by not entering any characters between semicolons. The header sections are:
+CSRPv2 messages use two different header formats: a minimal fragment header and a full message header. The minimal fragment header is prepended to the content of each fragment of a message. The full message header is prepended to the body of the full message.
+
+#### Minimal Fragment Header
+
+The CSRPv2 minimal fragment header contains three (3) parts. The value of each part should not contain any semicolon (`;`) characters to avoid ambiguity. Sections can be left blank by not entering any characters between semicolons. The header sections are:
 
 1. `Interaction ID` - The ID of the message. This is a string that uniquely identifies the message. This field is required and should be unique for each interaction. This can be used to pair requests and responses by using the same ID for both messages. The Interaction ID should be the same for all fragments of the same message.
 2. `Fragment Sequence Number` - The sequence number of the message fragment. This is a number that uniquely identifies the message fragment. This field is required if the message is fragmented. If left blank, the value is assumed to be equal to the `Fragment Count` value.
 3. `Fragment Count` - The total number of fragments in the message. This is a number that indicates the total number of fragments in the message. If left blank, the value is assumed to be `1`.
-4. `Source Server ID` - The ID of the server that sent the message. This is a string that uniquely identifies the server that sent the message. This field is required and should be origin server's job ID.
-5. `Destination Server ID` - The ID(s) of the server(s) that the message is intended for. This is a string that uniquely identifies the server(s) that the message is intended for. Can be empty, a single server job ID or a comma-separated list of job IDs. If left blank, the message is intended for all servers. If a job ID is prefixed with a minus sign (`-`), that job ID is excluded from the list of recipients.
-6. `Options` - A comma-separated list of key-value pairs that provide additional information about the message. The key and value of each option should not contain any semicolon (`;`), comma (`,`), or equals (`=`) characters to avoid ambiguity. The key and value of each option should be separated by an equals (`=`) character. This field can be left blank.
+
+Any characters after the minimal fragment header are considered to be part of the fragment content.
+
+#### Full Message Header
+
+A full CSRPv2 message header is composed of four (4) parts. The value of each part should not contain any semicolon (`;`) characters to avoid ambiguity. Sections can be left blank by not entering any characters between semicolons. The header sections are:
+
+1. `Interaction ID` - The ID of the message. This is a string that uniquely identifies the message. This field is required and should be unique for each interaction. This can be used to pair requests and responses by using the same ID for both messages. The Interaction ID should be the same for all fragments of the same message.
+2. `Source Server ID` - The ID of the server that sent the message. This is a string that uniquely identifies the server that sent the message. This field is required and should be origin server's job ID.
+3. `Destination Server ID` - The ID(s) of the server(s) that the message is intended for. This is a string that uniquely identifies the server(s) that the message is intended for. Can be empty, a single server job ID or a comma-separated list of job IDs. If left blank, the message is intended for all servers. If a job ID is prefixed with a minus sign (`-`), that job ID is excluded from the list of recipients.
+4. `Options` - A comma-separated list of key-value pairs that provide additional information about the message. The key and value of each option should not contain any semicolon (`;`), comma (`,`), or equals (`=`) characters to avoid ambiguity. The key and value of each option should be separated by an equals (`=`) character. This field can be left blank.
+
+Any characters after the full message header are considered to be the message body.
 
 ### Message Routing
 
-When a server receives all fragments of a CSRP message and reassembles it, it should first check the Source Server ID field to determine if the message is intended for it. The Destination Server ID string should first be split into a list of Job IDs using the comma (`,`) character as a delimiter. If any of the items in the resulting list are an empty string, then the message is intended for all servers. If the Job ID of the server that received the message is present in the list, then the message is intended for that server, unless the Job ID is prefixed with a minus sign (`-`).
+When a server receives all fragments of a CSRP message and reassembles it into a message with a full header, it should first check the Source Server ID field to determine if the message is intended for it. The Destination Server ID string should first be split into a list of Job IDs using the comma (`,`) character as a delimiter. If any of the items in the resulting list are an empty string, then the message is intended for all servers. If the Job ID of the server that received the message is present in the list, then the message is intended for that server, unless the Job ID is prefixed with a minus sign (`-`).
 
 If the Job ID of the server is prefixed with a minus sign (`-`), the message should be ignored regardless of any other matching Job IDs or blank items in the list.
 
@@ -66,15 +80,21 @@ If the Destination Server ID field is empty, then the message is intended for al
 
 ### Message Fragmentation
 
-The Roblox MessagingService has a maximum message size of 1 kB. If a message (including both the header and the body) is larger than 1 kB, it must be split into multiple fragments. Each fragment's header must have a unique Fragment Sequence Number and the Fragment Count must be equal to the total number of fragments. The Fragment Sequence Number of the first fragment must be `1`, and the Fragment Sequence Number of the last fragment must be equal to the Fragment Count. The CSRPv2 allows the fragment size to be any value as long as the Interaction ID, Fragment Sequence Number and Fragment Count fields fit in each fragment along with 1 or more characters of the remaining header and the message body.
+The Roblox MessagingService has a maximum message size of 1 kB, limiting the amount of data that can be sent in a single message. The CSRPv2 allows messages to be fragmented into multiple messages to allow for larger messages to be sent.
 
-Once a message has been split into fragments, the fragments can be sent in any order. The recipient should reassemble the fragments in the correct order before processing the message.
+CSRPv2 requires all messages to be fragmented. If a message is short enough, it can be encapsulated into a single fragment. Each fragment's header must have a unique Fragment Sequence Number and the Fragment Count must be equal to the total number of fragments. The Fragment Sequence Number of the first fragment must be `1`, and the Fragment Sequence Number of the last fragment must be equal to the Fragment Count. The CSRPv2 allows the fragment size to be any value as long as the Interaction ID, Fragment Sequence Number and Fragment Count fields fit in each fragment along with 1 or more characters of the remaining header and the message body.
 
-Once a fragmented message has been received, the fragments should be stored in a temporary buffer until all fragments have been received. Once all fragments have been received, the fragments should be reassembled in the correct order and the message should be processed as a single message.
+In order to fragment a message, the message should be concatenated into a single string with the following format:
 
-To reassemble a fragmented message, the recipient should sort the fragments by Fragment Sequence Number and concatenate the fragment bodies in the correct order. Each fragment must contain the Interaction ID, Fragment Sequence Number and Fragment Count fields. The other header fields can be retrieved from the reassembled message.
+```
+source_server_id;destination_server_ids;options;message body with any characters
+```
 
-For simplicity, the CSRP allows handling non-fragmented messages as fragmented messages with a Fragment Count of `1`. This allows the same code to be used to handle both fragmented and non-fragmented messages.
+Then, the message should be split into fragments of the desired size. The fragments should be prefixed with the minimal fragment header containing the Interaction ID, Fragment Sequence Number and Fragment Count separated by semicolons (`;`). The minimal fragment header should be followed by a semicolon and the content of the fragment.
+
+Once a fragmented message has been received, the fragments should be stored in a temporary buffer until all fragments have been received. Once all fragments have been received, the fragments should be reassembled in the correct order by concatenating the fragment content and prepending the Interaction ID to the final message. The reassembled message should then be processed as a normal CSRPv2 message.
+
+In order to be reassembled correctly, each fragment must contain the Interaction ID, Fragment Sequence Number and Fragment Count fields. The other header fields can be retrieved from the reassembled message. If a fragment contains no Interaction ID, it can be processed as a single fragment message with a Fragment Count of `1`.
 
 ## Examples
 
